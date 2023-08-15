@@ -1,6 +1,28 @@
 module TurtleSearch
     export Turtles, next!, Action
     @enum Action turn_left = 1 turn_right = -1 go_straight = 0 stop = 2
+
+    ```
+        an enum type for the direction of the turtle
+
+        the direction is defined by the relative position of the left foot and the right foot.
+        e.g., 
+        ↑ x x
+        j L R  = jpos
+        0 i →
+
+        ↑ R L
+        j x x  = jneg
+        0 i →
+
+        ↑ L x
+        j R x  = ipos
+        0 i →
+
+        ↑ x R
+        j x L  = ineg
+        0 i →
+    ```
     @enum Direction ipos ineg jpos jneg
 
     function usualurge(lforwardsignal, rforwardsignal)
@@ -125,5 +147,18 @@ update the status of the turtle with given map
     function next!(t::Turtles, mapmat::Matrix)
         nextaction = decidenextaction(t, mapmat)
         move!(t, nextaction)
-    end       
+    end  
+    function bisearch(t::Turtles, m::DelayedMatrix)
+        if getcurrentdir(t) in [ipos, ineg]
+            var_ind_range = (t.lpos[2], t.rpos[2])
+            var_ind_range = (min(var_ind_range), max(var_ind_range))
+            bisearch_functor(x::Real) = m[t.lpos[1]::Int, x::Real] 
+            return t.lpos[1], fzero(bisearch_functor, var_ind_range)
+        else
+            var_ind_range = (t.lpos[1], t.rpos[1])
+            var_ind_range = (min(var_ind_range), max(var_ind_range))
+            bisearch_functor(x::Real) = m[x::Real, t.lpos[2]::Int]
+            return fzero(bisearch_functor, var_ind_range), t.lpos[2]
+        end
+    end     
 end
