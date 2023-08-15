@@ -2,7 +2,7 @@ module TurtleSearch
     export Turtles, next!, Action
     @enum Action turn_left = 1 turn_right = -1 go_straight = 0 stop = 2
 
-    ```
+```
         an enum type for the direction of the turtle
 
         the direction is defined by the relative position of the left foot and the right foot.
@@ -22,7 +22,7 @@ module TurtleSearch
         ↑ x R
         j x L  = ineg
         0 i →
-    ```
+```
     @enum Direction ipos ineg jpos jneg
 
     function usualurge(lforwardsignal, rforwardsignal)

@@ -30,4 +30,7 @@ module DelayedMatrices
     function Base.size(m::DelayedMatrix)
         size(m.data)
     end
+    function Base.IndexStyle(::Type{<:DelayedMatrix})
+        IndexCartesian()
+    end
 end
