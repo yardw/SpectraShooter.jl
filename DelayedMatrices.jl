@@ -1,5 +1,5 @@
 module DelayedMatrices
-    export DelayedMatrix
+    export DelayedMatrix, getaxes
     # , DelayedMatrixView, DelayedMatrixTranspose, DelayedMatrixDiagonal, DelayedMatrixRow, DelayedMatrixCol, DelayedMatrixRowView, DelayedMatrixColView, DelayedMatrixRowTranspose, DelayedMatrixColTranspose, DelayedMatrixRowDiagonal, DelayedMatrixColDiagonal, DelayedMatrixRowViewTranspose, DelayedMatrixColViewTranspose, DelayedMatrixRowViewDiagonal, DelayedMatrixColViewDiagonal, DelayedMatrixRowTransposeView, DelayedMatrixColTransposeView, DelayedMatrixRowDiagonalView, DelayedMatrixColDiagonalView, DelayedMatrixRowTransposeViewTranspose, DelayedMatrixColTransposeViewTranspose, DelayedMatrixRowDiagonalViewDiagonal, DelayedMatrixColDiagonalViewDiagonal, DelayedMatrixRowTransposeViewDiagonal, DelayedMatrixColTransposeViewDiagonal, DelayedMatrixRowDiagonalViewTranspose, DelayedMatrixColDiagonalViewTranspose, DelayedMatrixRowDiagonalViewDiagonal, DelayedMatrixColDiagonalViewDiagonal
     struct DelayedMatrix{T} <: AbstractMatrix{T}
         data::Matrix{T}
