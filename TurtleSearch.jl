@@ -157,18 +157,18 @@ update the status of the turtle with given map
     function bisearch(t::Turtles, m::AbstractMatrix)
         if getcurrentdir(t) in [ipos, ineg]
             var_ind_range = (t.lpos[2], t.rpos[2])
-            var_ind_range = (min(var_ind_range), max(var_ind_range))
+            var_ind_range = (min(var_ind_range...), max(var_ind_range...))
             bisearch_functor_i(x::Real) = m[t.lpos[1]::Int, x::Real]
             return t.lpos[1], fzero(bisearch_functor_i, var_ind_range)
         else
             var_ind_range = (t.lpos[1], t.rpos[1])
-            var_ind_range = (min(var_ind_range), max(var_ind_range))
+            var_ind_range = (min(var_ind_range...), max(var_ind_range...))
             bisearch_functor_j(x::Real) = m[x::Real, t.lpos[2]::Int]
             return fzero(bisearch_functor_j, var_ind_range), t.lpos[2]
         end
     end    
     function fzero(f::Function, var_ind_range::Tuple{Real, Real})
-        var_ind_range = (min(var_ind_range), max(var_ind_range))
+        var_ind_range = (min(var_ind_range...), max(var_ind_range...))
         if f(var_ind_range[1]) * f(var_ind_range[2]) > 0
             error("f(var_ind_range[1]) * f(var_ind_range[2]) > 0")
         end

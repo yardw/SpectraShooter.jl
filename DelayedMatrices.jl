@@ -9,8 +9,8 @@ module DelayedMatrices
         yaxis::Function
 
         function DelayedMatrix(data::Matrix{T}, init::Function, xs, ys; logscaled = true) where T
-            xmin, xmax = min(xs), max(xs)
-            ymin, ymax = min(ys), max(ys)
+            xmin, xmax = min(xs...), max(xs...)
+            ymin, ymax = min(ys...), max(ys...)
             xexpinterp(i) = exp10((i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin)
             yexpinterp(j) = exp10((j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin)
             xinterp(i) = (i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin
@@ -25,13 +25,13 @@ module DelayedMatrices
     end
     function Base.getindex(m::DelayedMatrix, i::Int, j::Int)
         if !m.initialized[i,j]
-            m.data[i,j] = m.init(xaxis(i), yaxis(j))
+            m.data[i,j] = m.init(m.xaxis(i), m.yaxis(j))
             m.initialized[i,j] = true
         end
         m.data[i,j]
     end
     function Base.getindex(m::DelayedMatrix, i::Real, j::Real)
-        return m.init(xaxis(i), yaxis(j))
+        return m.init(m.xaxis(i), m.yaxis(j))
     end
     function Base.setindex!(m::DelayedMatrix, v, i, j)
         m.data[i,j] = v
@@ -46,6 +46,6 @@ module DelayedMatrices
         IndexCartesian()
     end
     function getaxes(m::DelayedMatrix)
-        return (m.xaxis.(range(1,size(data,1))), m.yaxis.(range(1,size(data,2))))
+        return (m.xaxis.(range(1,size(m.data,1))), m.yaxis.(range(1,size(m.data,2))))
     end
 end
