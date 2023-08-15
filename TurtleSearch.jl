@@ -1,5 +1,5 @@
 module TurtleSearch
-    export Turtles, next!, Action
+    export Turtles, next!, Action, findfirstseed!, bisearch
     @enum Action turn_left = 1 turn_right = -1 go_straight = 0 stop = 2
 
 ```
@@ -34,12 +34,18 @@ module TurtleSearch
             return go_straight
         end
     end
+    function usualantena(m::AbstractMatrix, newind::CartesianIndex, oldind::CartesianIndex)
+        new = m[newind]
+        old = m[oldind]
+        @assert new * old != 0 "new * old == 0"
+        return new * old < 0
+    end
     mutable struct Turtles
         lpos::CartesianIndex{2} #left foot position
         rpos::CartesianIndex{2} #right foot position(always keep distance 1 from lpos)
         forwardantena::Function #return the signal of the forward antena, given the turtle and a map
         urge::Function #decide the next action, given the left and right signals of the forward antena
-        function Turtles(forwardantena::Function, lpos::CartesianIndex{2}, rpos::CartesianIndex{2} = lpos+CartesianIndex(1, 0),  urge::Function = usualurge)
+        function Turtles(lpos::CartesianIndex{2} = CartesianIndex(1,2), rpos::CartesianIndex{2} = lpos+CartesianIndex(0, -1); forwardantena::Function = usualantena, urge::Function = usualurge)# by default, i is y, j is x, dir = ipos
             new(lpos, rpos, forwardantena, urge)
         end
     end
@@ -102,12 +108,12 @@ given a position and a direction, return the position of the next step
     function move(t::Turtles, action::Action)
         dpos = [(t.rpos - t.lpos)[i] for i in 1:2]
         turnL = [0 -1; 1 0]
-        turnR = [0 1; -1 0]
+        # turnR = [0 1; -1 0]
         if action == turn_left
             t.rpos = t.lpos + CartesianIndex(turnL * dpos ...)
             return t.lpos, t.rpos
         elseif action == turn_right
-            t.lpos = t.rpos + CartesianIndex(turnR * dpos ...)
+            t.lpos = t.rpos + CartesianIndex(turnL * dpos ...) #equals to CartesianIndex(turnR * (-dpos) ...), note that dpos = rpos - lpos
             return t.lpos, t.rpos
         elseif action == go_straight
             lpos = move(t.lpos, getcurrentdir(t))
@@ -122,7 +128,7 @@ given a position and a direction, return the position of the next step
 
 given a turtle and a map, return the action of the next step
 ```
-    function decidenextaction(t::Turtles, mapmat::Matrix)
+    function decidenextaction(t::Turtles, mapmat::AbstractMatrix)
         lforwardpos, rforwardpos = move(t, go_straight)
         #check if the turtle is going to be out of the map
         if (
@@ -131,8 +137,8 @@ given a turtle and a map, return the action of the next step
             || rforwardpos[1] < 1 || rforwardpos[1] > size(mapmat)[1]
             || rforwardpos[2] < 1 || rforwardpos[2] > size(mapmat)[2]
         )
-        return stop
-    end
+            return stop
+        end
     # @show lforwardpos rforwardpos t
         #if the turtle is not going to be out of the map, then decide the next step
         lforwardsignal = t.forwardantena(mapmat, lforwardpos, t.lpos)
@@ -140,25 +146,61 @@ given a turtle and a map, return the action of the next step
         return nextaction = t.urge(lforwardsignal, rforwardsignal)
     end
 ```
-next!
+next!, iterate
 
 update the status of the turtle with given map
 ```
-    function next!(t::Turtles, mapmat::Matrix)
+    function next!(t::Turtles, mapmat::AbstractMatrix)
         nextaction = decidenextaction(t, mapmat)
         move!(t, nextaction)
     end  
-    function bisearch(t::Turtles, m::DelayedMatrix)
+    function bisearch(t::Turtles, m::AbstractMatrix)
         if getcurrentdir(t) in [ipos, ineg]
             var_ind_range = (t.lpos[2], t.rpos[2])
             var_ind_range = (min(var_ind_range), max(var_ind_range))
-            bisearch_functor(x::Real) = m[t.lpos[1]::Int, x::Real] 
-            return t.lpos[1], fzero(bisearch_functor, var_ind_range)
+            bisearch_functor_i(x::Real) = m[t.lpos[1]::Int, x::Real]
+            return t.lpos[1], fzero(bisearch_functor_i, var_ind_range)
         else
             var_ind_range = (t.lpos[1], t.rpos[1])
             var_ind_range = (min(var_ind_range), max(var_ind_range))
-            bisearch_functor(x::Real) = m[x::Real, t.lpos[2]::Int]
-            return fzero(bisearch_functor, var_ind_range), t.lpos[2]
+            bisearch_functor_j(x::Real) = m[x::Real, t.lpos[2]::Int]
+            return fzero(bisearch_functor_j, var_ind_range), t.lpos[2]
         end
-    end     
+    end    
+    function fzero(f::Function, var_ind_range::Tuple{Real, Real})
+        var_ind_range = (min(var_ind_range), max(var_ind_range))
+        if f(var_ind_range[1]) * f(var_ind_range[2]) > 0
+            error("f(var_ind_range[1]) * f(var_ind_range[2]) > 0")
+        end
+        while var_ind_range[2] - var_ind_range[1] > 1e-3
+            mid = (var_ind_range[1] + var_ind_range[2]) / 2
+            if f(mid) * f(var_ind_range[1]) > 0
+                var_ind_range = (mid, var_ind_range[2])
+            else
+                var_ind_range = (var_ind_range[1], mid)
+            end
+        end
+        return var_ind_range[1]
+    end 
+    function findfirstseed!(m::AbstractMatrix, id1::CartesianIndex{2}, id2::CartesianIndex{2})
+        if id1 > id2
+            id1, id2 = id2, id1
+        end
+        did = 2(id2 - id1)
+        #check whether id1 and id2 are out of bound
+        while (1 <= id1[1] <= size(m, 1) ) && (1 <= id1[2] <= size(m, 2) ) && (1 <= id2[1] <= size(m, 1) ) && (1 <= id2[2] <= size(m, 2) )
+            # println(id1, id2)
+            if m[id1] * m[id2] > 0
+                id1, id2 = id2, id1 + did
+                # print(id1, id2)
+                continue
+            else
+                if id1 > id2
+                    id1, id2 = id2, id1
+                end
+                return id1, id2
+            end
+        end
+        return nothing
+    end
 end
