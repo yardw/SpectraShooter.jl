@@ -1,5 +1,5 @@
 module GoldbergerWiseEoM
-export errBCwithφ
+export errBCwithφ, M_IR
 using DifferentialEquations
 
 # parameters
@@ -8,6 +8,7 @@ const u  = 1.0e-1 #   log(ϕT / ϕP)/yₘ, this parameter should be fine-tuned t
 const ϕP = 1.e-1 # The scalar field value at Plank-brane
 const ϕT = exp(-u * yₘ)*ϕP
 const k = 37u #pp13 below eq(6.6)
+M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1) note that k*ym ~ O(50) is required to get the correct IR scale, but for numerical stability, k*ym is set at O(10)
 # l²= 1e-3 #kappa^2 * phiP^2 / 2
 # γ² = 1e9
 
@@ -59,10 +60,10 @@ W(ϕ, κ, k, u) = 6k/κ^2  - u*ϕ^2
 W′(ϕ, κ, k, u) =        - 2u*ϕ
 V(W, ϕ, κ, k, u) = 1/8 * (W′(ϕ, κ, k, u))^2 - κ^2 / 6 * W(ϕ, κ, k, u)^2
     
-function errBCwithφ(FP, params)
+function errBCwithφ(FP, params; φP = 0)
     mF, l², γ²= params
     yspan = (0.0,yₘ)
-    φP = 0
+    
     F′P= dFP(φP, FP, l², k, γ²)
     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
     # Fsol = solve(prob, Tsit5())
