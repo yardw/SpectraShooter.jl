@@ -10,7 +10,7 @@ const ϕT = exp(-u * yₘ)*ϕP
 const k = 37u #pp13 below eq(6.6)
 M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1) note that k*ym ~ O(50) is required to get the correct IR scale, but for numerical stability, k*ym is set at O(10)
 # l²= 1e-3 #kappa^2 * phiP^2 / 2
-# γ² = 1e9
+# γ² = 1e9 at large gamma limit
 
 #static profile
 @inline ϕ0(  y::Number)                                    = ϕP * (ϕT/ϕP)^(y/yₘ) #ϕ0' = -u ϕ0
@@ -71,6 +71,7 @@ function errBCwithφ(FP, params; φP = 0)
     F′T, FT = Fsol(yₘ)
     φ = getφ(Fsol, params)
     φT = φ(yₘ)
+    # φ(0)=φP from solving F(y) with BC
     ys = range(yₘ*(1-1e-6) , yₘ, 2)
     φ′T = (diff(φ.(ys))/diff(ys))[1]
     # dφT(φT, FT, l², k, γ²)#(3.14)
