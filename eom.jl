@@ -60,23 +60,44 @@ W(ϕ, κ, k, u) = 6k/κ^2  - u*ϕ^2
 W′(ϕ, κ, k, u) =        - 2u*ϕ
 V(W, ϕ, κ, k, u) = 1/8 * (W′(ϕ, κ, k, u))^2 - κ^2 / 6 * W(ϕ, κ, k, u)^2
     
-function errBCwithφ(FP, params; φP = 0)
+# function errBCwithφ(FP, params; φP = 0)
+#     mF, l², γ²= params
+#     yspan = (0.0,yₘ)
+    
+#     F′P= dFP(φP, FP, l², k, γ²)
+#     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
+#     Fsol = solve(prob, ImplicitEuler())
+#     # Fsol = solve(prob, Tsit5())
+#     F′T, FT = Fsol(yₘ)
+#     φ = getφ(Fsol, params)
+#     φT = φ(yₘ)
+#     # φ(0)=φP from solving F(y) with BC
+#     ys = range(yₘ*(1-1e-6) , yₘ, 2)
+#     φ′T = (diff(φ.(ys))/diff(ys))[1]
+#     # dφT(φT, FT, l², k, γ²)#(3.14)
+#     ΔφT =  (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt(   ( λT′′(0, l², k, γ²)/2)^2+  λT′(0, l², k, γ² )^2+1)  
+#     return ΔφT #distance from (F'T, FT) to the TeV brane BC line in phase diagram
+# end
+function solveODE(FP, params, φP)
     mF, l², γ²= params
     yspan = (0.0,yₘ)
-    
     F′P= dFP(φP, FP, l², k, γ²)
     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
-    # Fsol = solve(prob, Tsit5())
-    Fsol = solve(prob, ImplicitEuler())
+    return solve(prob, ImplicitEuler())
+end
+
+function calculateΔφT(Fsol, params)
+    mF, l², γ²= params
     F′T, FT = Fsol(yₘ)
     φ = getφ(Fsol, params)
     φT = φ(yₘ)
-    # φ(0)=φP from solving F(y) with BC
     ys = range(yₘ*(1-1e-6) , yₘ, 2)
     φ′T = (diff(φ.(ys))/diff(ys))[1]
-    # dφT(φT, FT, l², k, γ²)#(3.14)
-    ΔφT =  (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt(   ( λT′′(0, l², k, γ²)/2)^2+  λT′(0, l², k, γ² )^2+1)  
-    return ΔφT #distance from (F'T, FT) to the TeV brane BC line in phase diagram
+    return (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt((λT′′(0, l², k, γ²)/2)^2+ λT′(0, l², k, γ² )^2+1)
 end
 
+function errBCwithφ(FP, params; φP = 0)
+    Fsol = solveODE(FP, params, φP)
+    return calculateΔφT(Fsol, params)
+end
 end
