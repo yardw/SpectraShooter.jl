@@ -3,8 +3,8 @@ export errBCwithφ, M_IR, k, u, ϕP, yₘ, solveODE, getφ
 using DifferentialEquations
 
 # parameters
-const yₘ = 1e-2π #overall normalization s.t. y_m * Lambda = pi
-const u  = 1.0e1 #   log(ϕT / ϕP)/yₘ, this parameter should be fine-tuned to satisfy k*ym ~ O(50), but this causes instability by inrtoducing such a big hierarchy in numerical computation. Therefore here k*ym is set at O(10)
+const yₘ = 1e0π #overall normalization s.t. y_m * Lambda = pi
+const u  = 1.0e-1 #   log(ϕT / ϕP)/yₘ, this parameter should be fine-tuned to satisfy k*ym ~ O(50), but this causes instability by inrtoducing such a big hierarchy in numerical computation. Therefore here k*ym is set at O(10)
 const ϕP = 1.e-1 # The scalar field value at Plank-brane
 const ϕT = exp(-u * yₘ)*ϕP
 const k = 37u #pp13 below eq(6.6)
