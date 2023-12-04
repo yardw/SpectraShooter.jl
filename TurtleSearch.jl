@@ -1,12 +1,16 @@
 module TurtleSearch
     export Turtles, next!, Action, findfirstseed!, bisearch
+    """
+    an enum type for the **action** of the turtle, which tells the turtle **where** to go next.
+    - The action is defined by the relative position of the left foot and the right foot. See also [`usualantena`](@ref) and [`usualurge`](@ref).
+    """
     @enum Action turn_left = 1 turn_right = -1 go_straight = 0 stop = 2
 
-```
+    """
         an enum type for the direction of the turtle
 
-        the direction is defined by the relative position of the left foot and the right foot.
-        e.g., 
+    - the direction is defined by the relative position of the left foot and the right foot.
+    # e.g., 
         ↑ x x
         j L R  = jpos
         0 i →
@@ -22,9 +26,15 @@ module TurtleSearch
         ↑ x R
         j x L  = ineg
         0 i →
-```
+    """
     @enum Direction ipos ineg jpos jneg
 
+    """
+        usualurge(lforwardsignal, rforwardsignal) decides the next action of the turtle. Return [`Action`](@ref) type.
+    # Arguments
+    - `lforwardsignal`: the signal of the left forward antena
+    - `rforwardsignal`: the signal of the right forward antena 
+    """
     function usualurge(lforwardsignal, rforwardsignal)
         if lforwardsignal > rforwardsignal
             return turn_left
@@ -34,27 +44,48 @@ module TurtleSearch
             return go_straight
         end
     end
+    """
+        usualantena(m, newind, oldind) returns the signal of the forward antena, given the turtle and a map
+    # Arguments
+    - `m`: the map
+    - `newind`: the position of the forward antena
+    - `oldind`: the position of the turtle
+    """
     function usualantena(m::AbstractMatrix, newind::CartesianIndex, oldind::CartesianIndex)
         new = m[newind]
         old = m[oldind]
         @assert new * old != 0 "new * old == 0"
         return new * old < 0
     end
+    
     mutable struct Turtles
         lpos::CartesianIndex{2} #left foot position
         rpos::CartesianIndex{2} #right foot position(always keep distance 1 from lpos)
         forwardantena::Function #return the signal of the forward antena, given the turtle and a map
         urge::Function #decide the next action, given the left and right signals of the forward antena
-        function Turtles(lpos::CartesianIndex{2} = CartesianIndex(1,2), rpos::CartesianIndex{2} = lpos+CartesianIndex(0, -1); forwardantena::Function = usualantena, urge::Function = usualurge)# by default, i is y, j is x, dir = ipos
-            new(lpos, rpos, forwardantena, urge)
-        end
     end
+    """
+    # Arguments
+    - `lpos`: the position of the left foot
+    - `rpos`: the position of the right foot
+    - `forwardantena`: the function to return the signal of the forward antena, given the turtle and a map
+    - `urge`: the function to decide the next action, given the left and right signals of the forward antena
 
-```
-    getcurrentdir
-
-    given a turtle, return its current direction
-```
+    # Examples
+    ```jldoctest
+    using .TurtleSearch
+    m = [sin(y-x- pi/51) for x in range(0, stop=pi, length=50), y in range(0, stop=pi, length=50)]
+    t = Turtles(CartesianIndex(1,2), CartesianIndex(1,1))
+    ```
+    - by default, the turtle is facing to the positive `x` axis, i.e., the direction of the turtle is `ipos`. See also [`Direction`](@ref).
+    """
+    function Turtles(lpos::CartesianIndex{2} = CartesianIndex(1,2), rpos::CartesianIndex{2} = lpos+CartesianIndex(0, -1); forwardantena::Function = usualantena, urge::Function = usualurge)# by default, i is y, j is x, dir = ipos
+        new(lpos, rpos, forwardantena, urge)
+    end
+    """
+        getcurrentdir
+    - given a turtle, return its current direction
+    """
     function getcurrentdir(t::Turtles)
         dpos = t.rpos - t.lpos
         @assert dpos[1] * dpos[2] == 0 "turtle not in the line $(@show dpos t)" #check if the turtle's feet are in the line
@@ -123,11 +154,11 @@ given a position and a direction, return the position of the next step
             return nothing
         end
     end
-```
-    detectnextdir
+    """
+        detectnextdir
 
-given a turtle and a map, return the action of the next step
-```
+    given a turtle and a map, return the action of the next step
+    """
     function decidenextaction(t::Turtles, mapmat::AbstractMatrix)
         lforwardpos, rforwardpos = move(t, go_straight)
         #check if the turtle is going to be out of the map
@@ -145,11 +176,11 @@ given a turtle and a map, return the action of the next step
         rforwardsignal = t.forwardantena(mapmat, rforwardpos, t.rpos)
         return nextaction = t.urge(lforwardsignal, rforwardsignal)
     end
-```
-next!, iterate
+    """
+        next!, iterate
 
-update the status of the turtle with given map
-```
+    update the status of the turtle with given map
+    """
     function next!(t::Turtles, mapmat::AbstractMatrix)
         nextaction = decidenextaction(t, mapmat)
         move!(t, nextaction)
