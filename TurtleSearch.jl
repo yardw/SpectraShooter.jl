@@ -57,7 +57,13 @@ module TurtleSearch
         @assert new * old != 0 "new * old == 0"
         return new * old < 0
     end
-    
+    """
+        Turtles(lpos, rpos, forwardantena, urge) creates a turtle with given parameters
+    # How it works?
+    - The turtle is defined by the position of the left foot and the right foot.(In other words, the absolute position and direction.)
+    - The turtle has a forward antena, which can detect the value of the map around the current position of the turtle.
+    - The turtle has an urge, which decides the next action to move, given the signals from the forward antena.
+    """
     mutable struct Turtles
         lpos::CartesianIndex{2} #left foot position
         rpos::CartesianIndex{2} #right foot position(always keep distance 1 from lpos)
