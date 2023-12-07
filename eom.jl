@@ -104,8 +104,24 @@ function calculateΔφT(Fsol, params)
     return (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt((λT′′(0, l², k, γ²)/2)^2+ λT′(0, l², k, γ² )^2+1)
 end
 
-function errBCwithφ(FP, params; φP = 0)
+function errBCwithφ(FP, params; φP = 1.)
     Fsol = solveODE(FP, φP, params)
     return calculateΔφT(Fsol, params)
+end
+
+function paramsearch(;l2=nothing, g2=nothing, FP = 1., φP = 1.)
+    if !isnothing(g2) && isnothing(l2)
+        function paramsearch_l2_m(l2, m)
+            params = (m, l2, g2)
+            return errBCwithφ(FP, params, φP = φP )
+        end
+        return paramsearch_l2_m
+    elseif isnothing(g2) && !isnothing(l2)
+        function paramserch_g2_m(g2, m)
+            params = (m, l2, g2)
+            return errBCwithφ(FP, params, φP = φP)
+        end
+        return paramserch_g2_m
+    end
 end
 end
