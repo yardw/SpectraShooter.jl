@@ -1,16 +1,16 @@
 module LazyMatrices
     export LazyMatrix, getaxes
-    """
-        LazyMatrix{T} defines a matrix that is lazily initialized.
+"""
+    LazyMatrix{T} defines a matrix that is lazily initialized.
 
-    - The initialization function `init` is called only when certain matrix elements are actually accessed. 
-    - This helps when the initialization is expensive and only a small portion of the matrix needs to be used.
+- The initialization function `init` is called only when certain matrix elements are actually accessed. 
+- This helps when the initialization is expensive and only a small portion of the matrix needs to be used.
 
-    > The motivation comes from the following problem: given a function `f(x,y)`, we want to find the roots of `f(x,y) = 0` on a 2D grid. 
-    The function `f(x,y)` is expensive to evaluate(e.g. includes PDE), and all we need are just roots(1D spectrum on 2D grid) which only exist in a small portion of the grid.
-    Some algorithms for finding roots can dynamically adjust steps to stay close to the roots(spectrum), so we don't need to evaluate `f(x,y)` on the whole grid.
-    Therefore, the `LazyMatrix` is designed to reduce unnecessary function evaluation costs.
-    """
+> The motivation comes from the following problem: given a function `f(x,y)`, we want to find the roots of `f(x,y) = 0` on a 2D grid. 
+The function `f(x,y)` is expensive to evaluate(e.g. includes PDE), and all we need are just roots(1D spectrum on 2D grid) which only exist in a small portion of the grid.
+Some algorithms for finding roots can dynamically adjust steps to stay close to the roots(spectrum), so we don't need to evaluate `f(x,y)` on the whole grid.
+Therefore, the `LazyMatrix` is designed to reduce unnecessary function evaluation costs.
+"""
     struct LazyMatrix{T} <: AbstractMatrix{T}
         data::Matrix{T}
         init::Function
@@ -20,9 +20,7 @@ module LazyMatrices
         xaxis::Function
         yaxis::Function
 
-        
     end
-
     """
         LazyMatrix(data, init, xrange, yrange; logscaled = true) creates a `LazyMatrix` with the given data, initialization function, and axis ranges.
 
@@ -55,9 +53,9 @@ module LazyMatrices
         # at the beginning, all values are uninitialized
         initialized = falses(size(data))
         if logscaled
-            return new{T}(data, init, initialized, xaxis4logscaled, yaxis4logscaled)
+            return LazyMatrix{T}(data, init, initialized, xaxis4logscaled, yaxis4logscaled)
         else
-            return new{T}(data, init, initialized, xaxis4linscaled, yaxis4linscaled)
+            return LazyMatrix{T}(data, init, initialized, xaxis4linscaled, yaxis4linscaled)
         end
     end
     function Base.getindex(m::LazyMatrix, i::Int, j::Int)

@@ -86,7 +86,7 @@ module TurtleSearch
     - by default, the turtle is facing to the positive `x` axis, i.e., the direction of the turtle is `ipos`. See also [`Direction`](@ref).
     """
     function Turtles(lpos::CartesianIndex{2} = CartesianIndex(1,2), rpos::CartesianIndex{2} = lpos+CartesianIndex(0, -1); forwardantena::Function = usualantena, urge::Function = usualurge)# by default, i is y, j is x, dir = ipos
-        new(lpos, rpos, forwardantena, urge)
+        Turtles(lpos, rpos, forwardantena, urge)
     end
     """
         getcurrentdir

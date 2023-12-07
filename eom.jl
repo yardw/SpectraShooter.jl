@@ -1,5 +1,5 @@
 module GoldbergerWiseEoM
-export errBCwithφ, M_IR, k, u, ϕP, yₘ, solveODE, getφ
+export paramsearch, M_IR, γ²₀, k, u, ϕP, yₘ, solveODE, getφ, ϕ0
 using DifferentialEquations
 
 # parameters
@@ -9,6 +9,7 @@ const ϕP = 1.e-1 # The scalar field value at Plank-brane
 const ϕT = exp(-u * yₘ)*ϕP
 const k = 37u #pp13 below eq(6.6)
 M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1) note that k*ym ~ O(50) is required to get the correct IR scale, but for numerical stability, k*ym is set at O(10)
+γ²₀ = 4k+2u
 # l²= 1e-3 #kappa^2 * phiP^2 / 2
 # γ² = 1e9 at large gamma limit
 
