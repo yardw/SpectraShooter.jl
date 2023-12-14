@@ -4,14 +4,14 @@ using DifferentialEquations
 
 # parameters
 const yₘ = 1e0π #overall normalization s.t. y_m * Lambda = pi
-const u  = 1.0e-1 #   log(ϕT / ϕP)/yₘ, this parameter should be fine-tuned to satisfy k*ym ~ O(50), but this causes instability by inrtoducing such a big hierarchy in numerical computation. Therefore here k*ym is set at O(10)
+const u  = 1.0e-1 #  u = log(ϕT / ϕP)/yₘ, this parameter should be fine-tuned to satisfy k*ym ~ O(50), but this causes instability by inrtoducing such a big hierarchy in numerical computation. Therefore here k*ym is set at O(10)
 const ϕP = 1.e-1 # The scalar field value at Plank-brane
 const ϕT = exp(-u * yₘ)*ϕP
 const k = 37u #pp13 below eq(6.6)
-M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1) note that k*ym ~ O(50) is required to get the correct IR scale, but for numerical stability, k*ym is set at O(10)
+M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1)
 γ²₀ = 4k+2u
-# l²= 1e-3 #kappa^2 * phiP^2 / 2
-# γ² = 1e9 at large gamma limit
+# l² = kappa^2 * phiP^2 / 2 reflects the strength of backreaction
+# γ² initially is at large gamma limit
 
 #static profile
 @inline ϕ0(  y::Number)                                    = ϕP * (ϕT/ϕP)^(y/yₘ) #ϕ0' = -u ϕ0
@@ -33,11 +33,8 @@ function getφ(solF::ODESolution, params)
     F(y::Number)  = solF(y)[2]
     F′(y::Number) = solF(y)[1]
     φ(y::Number)  = -3ϕP^2/(2u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
-    # φ(y::Number)  = 3ϕP^2/(2u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
     return φ
 end
-
-#     # φ(y::Number)  = -6ϕP^2/(u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
 
 
 #BCs
@@ -47,14 +44,11 @@ end
 # non-perturbative gamma:
 @inline dφP(φ, F, l², k, γ²) = 0.5λP′′(φ, l², k, γ²) * φ - 2u * ϕP * F  #(3.14)
     # @inline dφP(φ, F, l², k, γ²) = 0.5( λP′′(φ, l², k, γ²) * φ + 2λP′(0, l², k, γ²) * F ) #(3.14)(wrong sign)
-    # @inline dφP(φ, F, l², k, γ²) = 0.5( λP′′(φ, l², k, γ²) * φ + 2λP′(φ, l², k, γ²) * F ) #(3.14)
 @inline dφT(φ, F, l², k, γ²) =-0.5λT′′(φ, l², k, γ²) * φ - 2u * ϕT * F  #(3.14)
     # @inline dφT(φ, F, l², k, γ²) =-0.5( λT′′(φ, l², k, γ²) * φ + 2λT′(0, l², k, γ²) * F ) #(3.14)(wrong sign)
-    # @inline dφT(φ, F, l², k, γ²) =-0.5( λT′′(φ, l², k, γ²) * φ + 2λT′(φ, l², k, γ²) * F ) #(3.14)
 @inline dFP(φ, F, l², k, γ²) = 2A′(0 , l², k, γ²)*F - 2u*l²*ϕ0(0)/ϕP^2/3 * φ # fix coe of φ term to be 2/3
-# @inline dFP(φ, F, l², k, γ²) = 2A′(0 , l², k, γ²)*F - u*l²*ϕ0(0)/ϕP^2/6 * φ
 @inline dFT(φ, F, l², k, γ²) = 2A′(yₘ, l², k, γ²)*F - 2u*l²*ϕ0(yₘ)/ϕP^2/3 * φ
-# @inline dFT(φ, F, l², k, γ²) = 2A′(yₘ, l², k, γ²)*F - u*l²*ϕ0(yₘ)/ϕP^2/6 * φ
+
 
 # EoM of F(perturbation on redshift factor A in metric)
 function radionSpectrum_secondOrder!(ddf, df, f, params, y)
@@ -68,32 +62,14 @@ end
 W(ϕ, κ, k, u) = 6k/κ^2  - u*ϕ^2
 W′(ϕ, κ, k, u) =        - 2u*ϕ
 V(W, ϕ, κ, k, u) = 1/8 * (W′(ϕ, κ, k, u))^2 - κ^2 / 6 * W(ϕ, κ, k, u)^2
-    
-# function errBCwithφ(FP, params; φP = 0)
-#     mF, l², γ²= params
-#     yspan = (0.0,yₘ)
-    
-#     F′P= dFP(φP, FP, l², k, γ²)
-#     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
-#     Fsol = solve(prob, ImplicitEuler())
-#     # Fsol = solve(prob, Tsit5())
-#     F′T, FT = Fsol(yₘ)
-#     φ = getφ(Fsol, params)
-#     φT = φ(yₘ)
-#     # φ(0)=φP from solving F(y) with BC
-#     ys = range(yₘ*(1-1e-6) , yₘ, 2)
-#     φ′T = (diff(φ.(ys))/diff(ys))[1]
-#     # dφT(φT, FT, l², k, γ²)#(3.14)
-#     ΔφT =  (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt(   ( λT′′(0, l², k, γ²)/2)^2+  λT′(0, l², k, γ² )^2+1)  
-#     return ΔφT #distance from (F'T, FT) to the TeV brane BC line in phase diagram
-# end
+
 function solveODE(FP, φP, params)
     _, l², γ²= params
     yspan = (0.0,yₘ)
     F′P= dFP(φP, FP, l², k, γ²)
     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
-    return solve(prob, Tsit5())
-    # return solve(prob, ImplicitEuler())
+    # return solve(prob, Tsit5())
+    return solve(prob, ImplicitEuler())
     # return solve(prob, Rosenbrock23())
 end
 
@@ -111,7 +87,6 @@ end
 
 function errBCwithφ(FP, params; φP = 1.)
     Fsol = solveODE(FP, φP, params)
-    # @show φP, getφ(Fsol, params)(0)
     return calculateΔφT(Fsol, params)
 end
 

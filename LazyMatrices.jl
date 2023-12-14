@@ -46,21 +46,23 @@ Therefore, the `LazyMatrix` is designed to reduce unnecessary function evaluatio
         xmin, xmax = min(xrange...), max(xrange...)
         ymin, ymax = min(yrange...), max(yrange...)
         # specify the axis(metric) functions for both linear and log scaled axes
-        xs(i) = nothing
-        ys(j) = nothing
-        if xlogscaled
-            xs(i) = exp10((i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin)
-        else
-            xs(i) = (i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin
-        end
-        if ylogscaled
-            ys(j) = exp10((j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin)
-        else
-            ys(j) = (j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin
-        end
-        @assert !isnothing(xs(1))&& !isnothing(ys(1)) "x and y axes are not properly initialized"
+        xslin(i) = (i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin
+        xslog(i) = exp10((i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin)
+        yslin(j) = (j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin
+        yslog(j) = exp10((j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin)
         # at the beginning, all values are uninitialized
         initialized = falses(size(data))
+        if xlogscaled
+            xs = xslog
+        else
+            xs = xslin
+        end
+        if ylogscaled
+            ys = yslog
+        else
+            ys = yslin
+        end
+        @show xs(1), xs(size(data,1)), ys(1), ys(size(data,2))
         return LazyMatrix{T}(data, init, initialized, xs, ys)
     end
     function Base.getindex(m::LazyMatrix, i::Int, j::Int)
