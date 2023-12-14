@@ -42,21 +42,26 @@ Therefore, the `LazyMatrix` is designed to reduce unnecessary function evaluatio
     - if `logscaled = false`, the x and y axis ranges are taken as linearly scaled value, e.g. `xrange = (-3, 3)` means the x axis ranges from -3 to 3)
     - given the indices `(i,j)`, `a=xaxis(i)` and `b=yaxis(j)`, then `init = (a,b)->a+b` means the matrix element at `(i,j)` will be initialized as `a+b`.
     """
-    function LazyMatrix(data::Matrix{T}, init::Function, xrange, yrange; logscaled = true) where T
+    function LazyMatrix(data::Matrix{T}, init::Function, xrange, yrange; xlogscaled = true, ylogscaled = true) where T
         xmin, xmax = min(xrange...), max(xrange...)
         ymin, ymax = min(yrange...), max(yrange...)
         # specify the axis(metric) functions for both linear and log scaled axes
-        xaxis4linscaled(i) = (i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin
-        yaxis4linscaled(j) = (j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin
-        xaxis4logscaled(i) = exp10((i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin)
-        yaxis4logscaled(j) = exp10((j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin)
+        xs(i) = nothing
+        ys(j) = nothing
+        if xlogscaled
+            xs(i) = exp10((i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin)
+        else
+            xs(i) = (i-1)/(size(data, 1)-1)*(xmax-xmin)+xmin
+        end
+        if ylogscaled
+            ys(j) = exp10((j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin)
+        else
+            ys(j) = (j-1)/(size(data, 2)-1)*(ymax-ymin)+ymin
+        end
+        @assert !isnothing(xs(1))&& !isnothing(ys(1)) "x and y axes are not properly initialized"
         # at the beginning, all values are uninitialized
         initialized = falses(size(data))
-        if logscaled
-            return LazyMatrix{T}(data, init, initialized, xaxis4logscaled, yaxis4logscaled)
-        else
-            return LazyMatrix{T}(data, init, initialized, xaxis4linscaled, yaxis4linscaled)
-        end
+        return LazyMatrix{T}(data, init, initialized, xs, ys)
     end
     function Base.getindex(m::LazyMatrix, i::Int, j::Int)
         if !m.initialized[i,j]

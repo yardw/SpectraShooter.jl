@@ -29,7 +29,7 @@ M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1) note that k*ym ~ O(50) is requ
 
 # EoM of φ, obtained from the zero solution of the Einstein eq #(3.12)
 function getφ(solF::ODESolution, params) 
-    mF, l², γ²= params
+    _, l², γ²= params
     F(y::Number)  = solF(y)[2]
     F′(y::Number) = solF(y)[1]
     φ(y::Number)  = -3ϕP^2/(2u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
@@ -60,8 +60,8 @@ end
 function radionSpectrum_secondOrder!(ddf, df, f, params, y)
     F  = f[1]
     F′ = df[1]
-    mF, l², γ²= params
-    dF′ = 2A′(y, l², k, γ²)*F′ + 4A′′(y, l², k, γ²)*F - 2u*F′ + 4u*A′(y, l², k, γ²)*F - mF^2 * exp(2A(y, l², k, γ²))*F #(3.17)
+    mF2, l², γ²= params
+    dF′ = 2A′(y, l², k, γ²)*F′ + 4A′′(y, l², k, γ²)*F - 2u*F′ + 4u*A′(y, l², k, γ²)*F - mF2 * exp(2A(y, l², k, γ²))*F #(3.17)
     ddf[1]=dF′
 end
 
@@ -88,7 +88,7 @@ V(W, ϕ, κ, k, u) = 1/8 * (W′(ϕ, κ, k, u))^2 - κ^2 / 6 * W(ϕ, κ, k, u)^2
 #     return ΔφT #distance from (F'T, FT) to the TeV brane BC line in phase diagram
 # end
 function solveODE(FP, φP, params)
-    mF, l², γ²= params
+    _, l², γ²= params
     yspan = (0.0,yₘ)
     F′P= dFP(φP, FP, l², k, γ²)
     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
@@ -117,17 +117,17 @@ end
 
 function paramsearch(;l2=nothing, g2=nothing, FP = 1., φP = 1.)
     if !isnothing(g2) && isnothing(l2)
-        function paramsearch_l2_m(l2, m)
-            params = (m, l2, g2)
+        function paramsearch_l2_m2(l2, m2)
+            params = (m2, l2, g2)
             return errBCwithφ(FP, params, φP = φP )
         end
-        return paramsearch_l2_m
+        return paramsearch_l2_m2
     elseif isnothing(g2) && !isnothing(l2)
-        function paramserch_g2_m(g2, m)
-            params = (m, l2, g2)
+        function paramserch_g2_m2(g2, m2)
+            params = (m2, l2, g2)
             return errBCwithφ(FP, params, φP = φP)
         end
-        return paramserch_g2_m
+        return paramserch_g2_m2
     end
 end
 end
