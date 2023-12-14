@@ -28,11 +28,12 @@ M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1) note that k*ym ~ O(50) is requ
 @inline λT′′(φ::Number, l²::Number, k::Number, γ²::Number) = 2γ²
 
 # EoM of φ, obtained from the zero solution of the Einstein eq #(3.12)
-function getφ(sol_of_F::ODESolution, params) 
+function getφ(solF::ODESolution, params) 
     mF, l², γ²= params
-    F(y::Number)  = sol_of_F(y)[2]
-    F′(y::Number) = sol_of_F(y)[1]
-    φ(y::Number)  = 3ϕP^2/(2u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
+    F(y::Number)  = solF(y)[2]
+    F′(y::Number) = solF(y)[1]
+    φ(y::Number)  = -3ϕP^2/(2u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
+    # φ(y::Number)  = 3ϕP^2/(2u*l²*ϕ0(y)) * (F′(y) - 2A′(y, l², k, γ²)*F(y))  #(3.12)
     return φ
 end
 
@@ -50,8 +51,10 @@ end
 @inline dφT(φ, F, l², k, γ²) =-0.5λT′′(φ, l², k, γ²) * φ - 2u * ϕT * F  #(3.14)
     # @inline dφT(φ, F, l², k, γ²) =-0.5( λT′′(φ, l², k, γ²) * φ + 2λT′(0, l², k, γ²) * F ) #(3.14)(wrong sign)
     # @inline dφT(φ, F, l², k, γ²) =-0.5( λT′′(φ, l², k, γ²) * φ + 2λT′(φ, l², k, γ²) * F ) #(3.14)
-@inline dFP(φ, F, l², k, γ²) = 2A′(0 , l², k, γ²)*F - u*l²*ϕ0(0)/ϕP^2/6 * φ
-@inline dFT(φ, F, l², k, γ²) = 2A′(yₘ, l², k, γ²)*F - u*l²*ϕ0(yₘ)/ϕP^2/6 * φ
+@inline dFP(φ, F, l², k, γ²) = 2A′(0 , l², k, γ²)*F - 2u*l²*ϕ0(0)/ϕP^2/3 * φ # fix coe of φ term to be 2/3
+# @inline dFP(φ, F, l², k, γ²) = 2A′(0 , l², k, γ²)*F - u*l²*ϕ0(0)/ϕP^2/6 * φ
+@inline dFT(φ, F, l², k, γ²) = 2A′(yₘ, l², k, γ²)*F - 2u*l²*ϕ0(yₘ)/ϕP^2/3 * φ
+# @inline dFT(φ, F, l², k, γ²) = 2A′(yₘ, l², k, γ²)*F - u*l²*ϕ0(yₘ)/ϕP^2/6 * φ
 
 # EoM of F(perturbation on redshift factor A in metric)
 function radionSpectrum_secondOrder!(ddf, df, f, params, y)
@@ -89,24 +92,26 @@ function solveODE(FP, φP, params)
     yspan = (0.0,yₘ)
     F′P= dFP(φP, FP, l², k, γ²)
     prob = SecondOrderODEProblem(radionSpectrum_secondOrder!,[F′P], [FP],yspan, params)
-    # return solve(prob, Tsit5())
-    return solve(prob, ImplicitEuler())
+    return solve(prob, Tsit5())
+    # return solve(prob, ImplicitEuler())
     # return solve(prob, Rosenbrock23())
 end
 
 function calculateΔφT(Fsol, params)
-    mF, l², γ²= params
-    F′T, FT = Fsol(yₘ)
+    _, l², γ²= params
+    _, FT = Fsol(yₘ)
     φ = getφ(Fsol, params)
     φT = φ(yₘ)
     ys = range(yₘ*(1-1e-6) , yₘ, 2)
     φ′T = (diff(φ.(ys))/diff(ys))[1]
     # return (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt((λT′′(0, l², k, γ²)/2)^2+ λT′(φT, l², k, γ² )^2+1)
-    return (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt((λT′′(0, l², k, γ²)/2)^2+ λT′(0, l², k, γ² )^2+1)
+    return dφT(φT, FT, l², k, γ²) + φ′T
+    # return (dφT(φT, FT, l², k, γ²) + φ′T)/sqrt((λT′′(0, l², k, γ²)/2)^2+ λT′(0, l², k, γ² )^2+1)
 end
 
 function errBCwithφ(FP, params; φP = 1.)
     Fsol = solveODE(FP, φP, params)
+    # @show φP, getφ(Fsol, params)(0)
     return calculateΔφT(Fsol, params)
 end
 
