@@ -58,6 +58,20 @@ function radionSpectrum_secondOrder!(ddf, df, f, params, y)
     dF′ = 2A′(y, l², k, γ²)*F′ + 4A′′(y, l², k, γ²)*F - 2u*F′ + 4u*A′(y, l², k, γ²)*F - mF2 * exp(2A(y, l², k, γ²))*F #(3.17)
     ddf[1]=dF′
 end
+# EoM of F(perturbation up to first order of l^2)
+function radionSpectrum_pert_secondOrder!(ddf, df, f, params, y)
+    mF2, l², γ²= params
+    M⁰₀, M¹₀, M⁰₁, M¹₁ = mF2
+    F⁰₀, F¹₀, F⁰₁, F¹₁ = f
+    F⁰₀′, F¹₀′, F⁰₁′, F¹₁′ = df
+
+    dF⁰₀′ = -2(u-k)*F⁰₀′ + 4k*u*F⁰₀ - M⁰₀*exp(2k*y)*F⁰₀
+    dF¹₀′ = -2(u-k)*F¹₀′ + 4k*u*F¹₀ - M¹₀*exp(2k*y)*F⁰₀ - 2u/3*exp(-2u*y)*(F⁰₀′-2u*F⁰₀)
+    dF⁰₁′ = -2(u-k)*F⁰₁′ + 4k*u*F⁰₁ - M⁰₁*exp(2k*y)*F⁰₀
+    dF¹₁′ = -2(u-k)*F¹₁′ + 4k*u*F¹₁ - M¹₁*exp(2k*y)*F⁰₀ - M¹₀*exp(2k*y)*F⁰₁ - 2u/3*exp(-2u*y)*(F⁰₁′-2u*F⁰₁)
+
+    ddf[1], ddf[2], ddf[3], ddf[4] = dF⁰₀′, dF¹₀′, dF⁰₁′, dF¹₁′
+end
 
 W(ϕ, κ, k, u) = 6k/κ^2  - u*ϕ^2
 W′(ϕ, κ, k, u) =        - 2u*ϕ
