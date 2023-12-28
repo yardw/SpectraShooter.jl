@@ -13,6 +13,64 @@ M_IR = exp(-k*yₘ) #IR brane scale;(with M_Pl=1)
 # l² = kappa^2 * phiP^2 / 2 reflects the strength of backreaction
 # γ² initially is at large gamma limit
 
+@enum ModelType begin
+    Perturbed00to11Order
+    Unperturbed
+end
+"""
+    Settings for the model.
+        
+# Parameters
+- FP: initial conditions for the field f
+- φP: initial conditions for the field φ
+- l2: l² or range of l² to scan
+- g2: γ² or range of γ² to scan
+- m2: range of m² to scan
+- model_type: Unperturbed or Perturbed00to11Order
+# Examples
+```julia
+FP = 1.; φP = 1.; l2 = 1.; g2 = (1,2); m2 = (0,1)
+settings = Settings(FP, φP, l2, g2, m2) # Unperturbed model
+FP = [1., 2., 3., 4.]; φP = [1., 2., 3., 4.]; l2 = 1.; g2 = (1,2); m2 = ((0,1), (0,1), (0,1), (0,1))
+settings = Settings(FP, φP, l2, g2, m2, model_type=Perturbed00to11Order) # Perturbed model
+```
+"""
+struct Settings
+    model_type::ModelType
+    u::Number
+    k::Number
+    yₘ::Number
+    M_IR::Number
+    γ²₀::Number
+    FP::Union{Number,Vector{Number}}
+    φP::Union{Number,Vector{Number}}
+    l2::Union{Number,Tuple{Number,Number}}
+    g2::Union{Number,Tuple{Number,Number}}
+    m2::Union{Tuple{Number,Number},Tuple{Tuple{Number,Number},Tuple{Number,Number},Tuple{Number,Number},Tuple{Number,Number}}}
+    
+    function Settings(FP, φP, l2, g2, m2; model_type=Unperturbed)
+        if model_type == Unperturbed
+            @assert begin
+                FP isa Number && 
+                φP isa Number &&
+                m2 isa Tuple{Number,Number}
+            end "Unperturbed model requires single FP and φP as initial conditions. m² must be a tuple of range."
+        elseif model_type == Perturbed00to11Order
+            @assert begin
+                length(FP) == length(φP) == length(m2) == 4 &&
+                m2 isa Tuple{Tuple{Number,Number},Tuple{Number,Number},Tuple{Number,Number},Tuple{Number,Number}}
+            end "Perturbed model requires vectors [FP⁰₀, FP⁰₁, FP¹₀, FP¹₁], [φP⁰₀, φP⁰₁, φP¹₀, φP¹₁] and four ranges for [m²⁰₀, m²⁰₁, m²¹₀, m²¹₁] as initial conditions."
+        else
+            error("Unknown model type.")
+        end
+        @assert begin
+            l2 isa Number && g2 isa Tuple{Number,Number} ||
+            l2 isa Tuple{Number,Number} && g2 isa Number
+        end "One of l² and γ² must be a number, and another be a tuple of range, which will be scanned to give a mass spectrum."
+        new(model_type, u, k, yₘ, M_IR, γ²₀, FP, φP, l2, g2, m2)
+    end# init function
+end# struct Settings
+
 #static profile
 @inline ϕ0(  y::Number)                                    = ϕP * (ϕT/ϕP)^(y/yₘ) #ϕ0' = -u ϕ0
 @inline A(   y::Number, l²::Number, k::Number, γ²::Number) = k * y + l²/6 * (ϕT/ϕP)^(2y/yₘ)
